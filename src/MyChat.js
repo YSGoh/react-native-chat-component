@@ -2,9 +2,9 @@ import React from "react";
 import { GiftedChat } from 'react-native-gifted-chat';
 import Chatkit from "@pusher/chatkit";
 
-const CHATKIT_TOKEN_PROVIDER_ENDPOINT = "https://us1.pusherplatform.io/services/chatkit_token_provider/v1/44e39f10-6955-4ac7-bca1-201e2d8cccdb/token";
-const CHATKIT_INSTANCE_LOCATOR = "v1:us1:44e39f10-6955-4ac7-bca1-201e2d8cccdb";
-const CHATKIT_ROOM_ID = "14669201";
+const CHATKIT_TOKEN_PROVIDER_ENDPOINT = "https://us1.pusherplatform.io/services/chatkit_token_provider/v1/79b9b2a0-dc96-4b11-8634-88a982925ce1/token";
+const CHATKIT_INSTANCE_LOCATOR = "v1:us1:79b9b2a0-dc96-4b11-8634-88a982925ce1";
+const CHATKIT_ROOM_ID = 14814077;
 const CHATKIT_USER_NAME = "Dave"; // Let's chat as "Dave" for this tutorial
 
 export default class MyChat extends React.Component {
@@ -32,13 +32,44 @@ export default class MyChat extends React.Component {
       this.currentUser.subscribeToRoom({
         roomId: CHATKIT_ROOM_ID,
         hooks: {
-          onNewMessage: message => alert(message.text)
+          onNewMessage: this.onReceive.bind(this)
         }
       });
     });
   }
 
+  onReceive(data) {
+    const { id, senderId, text, createdAt } = data;
+    const incomingMessage = {
+      _id: id,
+      text: text,
+      createdAt: new Date(createdAt),
+      user: {
+        _id: senderId,
+        name: senderId,
+        avatar: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQmXGGuS_PrRhQt73sGzdZvnkQrPXvtA-9cjcPxJLhLo8rW-sVA"
+      }
+    };
+
+    this.setState(previousState => ({
+      messages: GiftedChat.append(previousState.messages, incomingMessage)
+    }));
+  }
+
+  onSend([message]) {
+    this.currentUser.sendMessage({
+      text: message.text,
+      roomId: CHATKIT_ROOM_ID
+    });
+  }
+
   render() {
-    return <GiftedChat messages={this.state.messages} />;
+    return <GiftedChat
+            messages={this.state.messages}
+            onSend={messages => this.onSend(messages)}
+            user={{
+              _id: CHATKIT_USER_NAME
+            }}
+            />;
   }
 }
